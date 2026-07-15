@@ -1,0 +1,20 @@
+# Creates enabled Grafana folders from folders values.
+
+# Usage: For a new folder, add its values entry and place exports under the
+# matching alerts/<folder-key>/ directory using the same Grafana folder title.
+{{- range $key, $folder := .Values.folders }}
+{{- if $folder.enabled }}
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: {{ required (printf "folders.%s.name is required" $key) $folder.name | quote }}
+  namespace: {{ $.Values.namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  title: {{ required (printf "folders.%s.title is required" $key) $folder.title | quote }}
+  instanceSelector:
+{{ toYaml $.Values.instanceSelector | nindent 4 }}
+{{- end }}
+{{- end }}

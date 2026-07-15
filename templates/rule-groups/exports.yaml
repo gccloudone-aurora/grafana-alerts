@@ -1,0 +1,77 @@
+# Converts JSON files under alerts/<folder-key>/ into Grafana alert rule groups.
+
+# Usage: Add or replace exported JSON files; do not edit this template for normal
+# alert changes. Rendering validates folder, routing, datasource, and description.
+{{- range $path, $_ := .Files.Glob "alerts/*/*.json" }}
+{{- $parts := splitList "/" $path }}
+{{- $folderKey := index $parts 1 }}
+{{- if not (hasKey $.Values.folders $folderKey) }}
+{{- fail (printf "%s references unknown folder key %q" $path $folderKey) }}
+{{- end }}
+{{- $folder := index $.Values.folders $folderKey }}
+{{- if $folder.enabled }}
+{{- $export := mustFromJson ($.Files.Get $path) }}
+{{- if ne (int $export.apiVersion) 1 }}
+{{- fail (printf "%s must use Grafana provisioning apiVersion 1" $path) }}
+{{- end }}
+{{- if ne (len $export.groups) 1 }}
+{{- fail (printf "%s must contain exactly one groups[] entry" $path) }}
+{{- end }}
+{{- $group := index $export.groups 0 }}
+{{- if ne $group.folder $folder.title }}
+{{- fail (printf "%s exports folder %q; expected %q" $path $group.folder $folder.title) }}
+{{- end }}
+{{- range $rule := $group.rules }}
+{{- $routingLabel := $.Values.notificationPolicy.routingLabel }}
+{{- if hasKey $rule "notification_settings" }}
+{{- fail (printf "%s rule %q must use label-based notification policy routing; remove notification_settings" $path $rule.uid) }}
+{{- end }}
+{{- if or (not (hasKey $rule.annotations "description")) (empty $rule.annotations.description) }}
+{{- fail (printf "%s rule %q must define a non-empty annotations.description for notification content" $path $rule.uid) }}
+{{- end }}
+{{- if not (hasKey $rule.labels $routingLabel) }}
+{{- fail (printf "%s rule %q must define labels.%s" $path $rule.uid $routingLabel) }}
+{{- end }}
+{{- $routeValue := index $rule.labels $routingLabel }}
+{{- $matchingRoute := false }}
+{{- range $_, $route := $.Values.routes }}
+{{- if and $route.enabled (eq $route.matcherValue $routeValue) }}
+{{- $matchingRoute = true }}
+{{- end }}
+{{- end }}
+{{- if not $matchingRoute }}
+{{- fail (printf "%s rule %q routes to %q but no enabled route has that matcherValue" $path $rule.uid $routeValue) }}
+{{- end }}
+{{- range $query := $rule.data }}
+{{- if and (ne $query.datasourceUid "__expr__") (ne $query.datasourceUid $.Values.datasourceUid) }}
+{{- fail (printf "%s rule %q query %q uses datasourceUid %q; expected %q or __expr__" $path $rule.uid $query.refId $query.datasourceUid $.Values.datasourceUid) }}
+{{- end }}
+{{- $modelDatasourceUid := dig "model" "datasource" "uid" "" $query }}
+{{- if and $modelDatasourceUid (ne $modelDatasourceUid "__expr__") (ne $modelDatasourceUid $.Values.datasourceUid) }}
+{{- fail (printf "%s rule %q query %q uses model.datasource.uid %q; expected %q or __expr__" $path $rule.uid $query.refId $modelDatasourceUid $.Values.datasourceUid) }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- $baseName := trimSuffix ".json" (base $path) }}
+{{- $resourceName := printf "%s-%s" $folderKey $baseName | lower | replace "_" "-" }}
+{{- if or (gt (len $resourceName) 63) (not (regexMatch "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$" $resourceName)) }}
+{{- fail (printf "%s produces invalid Kubernetes resource name %q" $path $resourceName) }}
+{{- end }}
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaAlertRuleGroup
+metadata:
+  name: {{ $resourceName | quote }}
+  namespace: {{ $.Values.namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  name: {{ required (printf "%s groups[0].name is required" $path) $group.name | quote }}
+  folderRef: {{ $folder.name | quote }}
+  interval: {{ required (printf "%s groups[0].interval is required" $path) $group.interval | quote }}
+  instanceSelector:
+{{ toYaml $.Values.instanceSelector | nindent 4 }}
+  rules:
+{{ toYaml $group.rules | nindent 4 }}
+{{- end }}
+{{- end }}

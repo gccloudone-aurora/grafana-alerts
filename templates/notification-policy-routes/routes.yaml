@@ -1,0 +1,47 @@
+# Creates enabled child routes and attaches them to the root notification policy.
+
+# Usage: Add or update routes values; matcherValue must match the alert's routing
+# label, and receiverRef must identify an enabled contact point.
+{{- range $key, $route := .Values.routes }}
+{{- if $route.enabled }}
+{{- $contactPoint := index $.Values.contactPoints $route.receiverRef }}
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicyRoute
+metadata:
+  name: {{ printf "%s-notification-route" $key | quote }}
+  namespace: {{ $.Values.namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  labels:
+{{ toYaml $.Values.notificationPolicy.routeSelectorLabels | nindent 4 }}
+spec:
+  receiver: {{ $contactPoint.name | quote }}
+  object_matchers:
+    - - {{ $.Values.notificationPolicy.routingLabel | quote }}
+      - "="
+      - {{ $route.matcherValue | quote }}
+{{- range $matcher := $route.additionalMatchers }}
+    - - {{ $matcher.label | quote }}
+      - {{ $matcher.operator | quote }}
+      - {{ $matcher.value | quote }}
+{{- end }}
+  group_by:
+{{ toYaml $route.groupBy | nindent 4 }}
+  group_wait: {{ $route.groupWait | quote }}
+  group_interval: {{ $route.groupInterval | quote }}
+  repeat_interval: {{ $route.repeatInterval | quote }}
+{{- if $route.activeTimeIntervalRefs }}
+  active_time_intervals:
+{{- range $timingRef := $route.activeTimeIntervalRefs }}
+    - {{ (index $.Values.timeIntervals $timingRef).name | quote }}
+{{- end }}
+{{- end }}
+{{- if $route.muteTimeIntervalRefs }}
+  mute_time_intervals:
+{{- range $timingRef := $route.muteTimeIntervalRefs }}
+    - {{ (index $.Values.timeIntervals $timingRef).name | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
