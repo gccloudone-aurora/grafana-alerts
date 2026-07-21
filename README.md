@@ -36,18 +36,25 @@ Normal Day 2 alert changes do not require edits under `templates/`.
 | Task | Where to make the change |
 | --- | --- |
 | Add or update an alert in an existing domain | Export JSON to `alerts/<folder-key>/` |
-| Change recipients, credentials, or production schedules | Private values in `config.yaml` |
-| Add a new notification domain | Values entries for its folder, contact point, route, Secret, and schedules |
+| Change recipients, credentials, or environment-specific schedules | Deployment overrides in the platform `config.yaml` |
+| Change shared routing, resource names, or schedule defaults | `values.yaml` in this repository |
+| Add a new notification domain | Defaults in `values.yaml` and deployment-specific overrides in the platform repository |
 | Change the GC Notify payload or add a provider | Helm templates and supporting values |
 
-The three values files serve different purposes:
+Configuration is split by ownership:
 
-- `values.yaml` defines safe chart defaults and the supported configuration.
+- `values.yaml` defines resource names, Secret key contracts, provider settings,
+  routing behavior, schedules, and other shared chart defaults.
 - `ci/test-values.yaml` contains non-production values used only to exercise the
   complete chart in CI.
-- `config.yaml` supplies the deployment-specific
-  overrides consumed by Argo CD. Private overrides and AVP placeholders provide
-  environment-specific recipients and credentials.
+- The platform `config.yaml` selects the Grafana instance and datasource, enables
+  the resources needed by that deployment, and supplies recipients, template IDs,
+  and AVP placeholders for credentials.
+
+Keeping shared behavior here makes alert rules and their notification setup
+reviewable together. The platform repository remains responsible for where the
+chart runs and for values that differ by environment. A deployment override is
+only needed when it intentionally differs from these defaults.
 
 ### Add or change an alert group
 
@@ -136,11 +143,7 @@ A private Git repository is not a secret store. Do not provide literal secret
 values in Git values files; use Vault placeholders or a cluster-side external
 secret controller.
 
-When a contact point references an enabled `managedSecrets` entry, Helm verifies
-that the referenced URL and authorization keys exist. References to Secrets
-owned by an external controller are intentionally allowed; their existence and
-keys cannot be verified during Helm rendering and must be validated in the
-target environment.
+Helm validates alert exports and required values used by enabled resources.
 
 CI rejects common credential-bearing keys in rule exports as an accidental
 secret-disclosure guard. This is a focused policy check, not a replacement for

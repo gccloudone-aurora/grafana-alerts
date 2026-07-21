@@ -23,9 +23,11 @@ managedSecrets:
 contactPoints:
   trivy-gc-notify:
     enabled: true
-    recipient:
-      email: trivy@example.invalid
-      name: Trivy Operations
+    recipients:
+      - email: trivy-primary@example.invalid
+        name: Trivy Primary
+      - email: trivy-secondary@example.invalid
+        name: Trivy Secondary
     gcNotify:
       templateId: 00000000-0000-0000-0000-000000000000
     authorization:

@@ -52,16 +52,14 @@ managedSecrets:
       trivy-webhook-authorization-credentials: ""
 
 # Supported contact point providers are explicit so provider-specific settings
-# and secret requirements remain strongly validated.
+# and secret references remain visible in rendered resources.
 contactPoints:
   trivy-gc-notify:
     enabled: false
     name: trivy-webhook
     type: gc-notify-webhook
     disableResolveMessage: true
-    recipient:
-      email: ""
-      name: ""
+    recipients: []
     gcNotify:
       templateId: ""
     secretRef:

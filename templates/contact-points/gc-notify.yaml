@@ -4,6 +4,10 @@
 # keep webhook URLs and credentials in the referenced Kubernetes Secret.
 {{- range $key, $contactPoint := .Values.contactPoints }}
 {{- if and $contactPoint.enabled (eq $contactPoint.type "gc-notify-webhook") }}
+{{- $recipients := $contactPoint.recipients }}
+{{- if eq (len $recipients) 0 }}
+{{- fail (printf "contactPoints.%s.recipients must contain at least one recipient" $key) }}
+{{- end }}
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaContactPoint
@@ -17,6 +21,7 @@ spec:
   instanceSelector:
 {{ toYaml $.Values.instanceSelector | nindent 4 }}
   receivers:
+{{- range $index, $recipient := $recipients }}
     - type: webhook
       disableResolveMessage: {{ $contactPoint.disableResolveMessage }}
       settings:
@@ -42,6 +47,7 @@ spec:
             secretKeyRef:
               name: {{ $contactPoint.secretRef.name | quote }}
               key: {{ required (printf "contactPoints.%s.secretRef.authorizationCredentialsKey is required when authorization is enabled" $key) $contactPoint.secretRef.authorizationCredentialsKey | quote }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
