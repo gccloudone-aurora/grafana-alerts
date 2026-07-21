@@ -29,8 +29,8 @@ spec:
         payload:
           template: '{{`{{ template "gc-notify.payload" . }}`}}'
           vars:
-            email_address: {{ required (printf "contactPoints.%s.recipient.email is required" $key) $contactPoint.recipient.email | quote }}
-            recipient_name: {{ required (printf "contactPoints.%s.recipient.name is required" $key) $contactPoint.recipient.name | quote }}
+            email_address: {{ required (printf "contactPoints.%s.recipients[%d].email is required" $key $index) $recipients.email | quote }}
+            recipient_name: {{ required (printf "contactPoints.%s.recipients[%d].name is required" $key $index) $recipients.name | quote }}
             template_id: {{ required (printf "contactPoints.%s.gcNotify.templateId is required" $key) $contactPoint.gcNotify.templateId | quote }}
 {{- if $contactPoint.authorization.enabled }}
         authorization_scheme: {{ required (printf "contactPoints.%s.authorization.scheme is required when authorization is enabled" $key) $contactPoint.authorization.scheme | quote }}
