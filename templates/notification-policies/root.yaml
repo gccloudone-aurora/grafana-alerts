@@ -1,0 +1,25 @@
+# Creates Grafana's single root notification policy and discovers child routes.
+
+# Usage: Normally do not edit this template; add routing domains under routes
+# instead. Unmatched alerts use Grafana's built-in empty receiver and send nothing.
+{{- if .Values.notificationPolicy.enabled }}
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationPolicy
+metadata:
+  name: aurora-notification-policy
+  namespace: {{ .Values.namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  instanceSelector:
+{{ toYaml .Values.instanceSelector | nindent 4 }}
+  route:
+    # Grafana 12.4+ provides this no-op receiver; Aurora runs Grafana 13.1.
+    receiver: empty
+    group_by:
+      - grafana_folder
+      - alertname
+    routeSelector:
+      matchLabels:
+{{ toYaml .Values.notificationPolicy.routeSelectorLabels | nindent 8 }}
+{{- end }}

@@ -1,0 +1,57 @@
+name: Validate alerts
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.19.0
+
+      - name: Validate alert exports
+        run: |
+          test "$(find alerts -name '*.json' | wc -l)" -gt 0
+          find alerts -name '*.json' -print0 | xargs -0 -n1 jq empty
+          test -z "$(find alerts -name '*.json' -exec jq -r '.groups[].rules[].uid' {} + | sort | uniq -d)"
+          if grep -Erni '"(secureSettings|secureJsonData|password|apiKey|authorizationCredentials|authorization_credentials|webhookUrl|webhook_url|token|secret)"[[:space:]]*:' alerts; then
+            echo "Alert exports must not contain credentials or webhook URLs"
+            exit 1
+          fi
+
+      - name: Lint and render chart
+        run: |
+          helm lint .
+          helm lint . -f ci/test-values.yaml
+          helm template grafana-alert-resources . \
+            --namespace grafana-system \
+            -f ci/test-values.yaml > rendered.yaml
+          test "$(grep -c '^kind: GrafanaAlertRuleGroup$' rendered.yaml)" \
+            -eq "$(find alerts -name '*.json' | wc -l)"
+
+      - name: Install kubeconform
+        working-directory: ${{ runner.temp }}
+        run: |
+          curl -fSLO https://github.com/yannh/kubeconform/releases/download/v0.8.0/kubeconform-linux-amd64.tar.gz
+          tar -xzf kubeconform-linux-amd64.tar.gz kubeconform
+          sudo install -m 0755 kubeconform /usr/local/bin/kubeconform
+
+      - name: Validate rendered YAML with kubeconform
+        run: |
+          kubeconform -strict -summary \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            rendered.yaml

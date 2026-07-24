@@ -1,0 +1,471 @@
+{
+  "apiVersion": 1,
+  "groups": [
+    {
+      "orgId": 1,
+      "name": "daily-group",
+      "folder": "trivy",
+      "interval": "15m",
+      "rules": [
+        {
+          "uid": "dfobq33jo8bgga",
+          "title": "Trivy Image Vulnerabilities",
+          "condition": "D",
+          "data": [
+            {
+              "refId": "csp_crit_current",
+              "relativeTimeRange": {
+                "from": 900,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "editorMode": "code",
+                "exemplar": false,
+                "expr": "sum(\r\n    max by (image_registry, image_repository, image_tag, severity, namespace) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"Critical\", image_registry=~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h]) \u003e 0\r\n        )\r\n    )\r\n) OR on() vector(0)",
+                "instant": true,
+                "interval": "",
+                "intervalMs": 1000,
+                "legendFormat": "Critical",
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "csp_crit_current"
+              }
+            },
+            {
+              "refId": "csp_high_current",
+              "relativeTimeRange": {
+                "from": 900,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "editorMode": "code",
+                "exemplar": false,
+                "expr": "sum(\r\n    max by (image_registry, image_repository, image_tag, severity, namespace) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"High\", image_registry=~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h]) \u003e 0\r\n        )\r\n    )\r\n) OR on() vector(0)",
+                "instant": true,
+                "interval": "",
+                "intervalMs": 1000,
+                "legendFormat": "High",
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "csp_high_current"
+              }
+            },
+            {
+              "refId": "aur_crit_current",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "editorMode": "code",
+                "expr": "sum(\r\n    max by (image_registry, image_repository, image_tag, severity) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"Critical\", image_registry!~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h]) \u003e 0\r\n        )\r\n        * on(namespace) group_left()\r\n        kube_namespace_labels{label_namespace_ssc_spc_gc_ca_purpose=\"system\"}\r\n    )\r\n) OR on() vector(0)",
+                "instant": true,
+                "intervalMs": 1000,
+                "legendFormat": "__auto",
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "aur_crit_current"
+              }
+            },
+            {
+              "refId": "aur_high_current",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "editorMode": "code",
+                "expr": "sum(\r\n    max by (image_registry, image_repository, image_tag, severity) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"High\", image_registry!~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h]) \u003e 0\r\n        )\r\n        * on(namespace) group_left()\r\n        kube_namespace_labels{label_namespace_ssc_spc_gc_ca_purpose=\"system\"}\r\n    )\r\n) OR on() vector(0)",
+                "instant": true,
+                "intervalMs": 1000,
+                "legendFormat": "__auto",
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "aur_high_current"
+              }
+            },
+            {
+              "refId": "aur_crit_24h",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "editorMode": "code",
+                "expr": "(sum(\r\n    max by (image_registry, image_repository, image_tag, severity) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"Critical\", image_registry!~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h]) \u003e 0\r\n        )\r\n        * on(namespace) group_left()\r\n        kube_namespace_labels{label_namespace_ssc_spc_gc_ca_purpose=\"system\"}\r\n    )\r\n) OR on() vector(0))\r\n-\r\n(sum(\r\n    max by (image_registry, image_repository, image_tag, severity) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"Critical\", image_registry!~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h] offset 24h ) \u003e 0\r\n        )\r\n        * on(namespace) group_left()\r\n        kube_namespace_labels{label_namespace_ssc_spc_gc_ca_purpose=\"system\"} offset 24h\r\n    )\r\n) OR on() vector(0))",
+                "instant": true,
+                "intervalMs": 1000,
+                "legendFormat": "__auto",
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "aur_crit_24h"
+              }
+            },
+            {
+              "refId": "aur_high_24h",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "editorMode": "code",
+                "expr": "(sum(\r\n    max by (image_registry, image_repository, image_tag, severity) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"High\", image_registry!~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h]) \u003e 0\r\n        )\r\n        * on(namespace) group_left()\r\n        kube_namespace_labels{label_namespace_ssc_spc_gc_ca_purpose=\"system\"}\r\n    )\r\n) OR on() vector(0))\r\n-\r\n(sum(\r\n    max by (image_registry, image_repository, image_tag, severity) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"High\", image_registry!~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h] offset 24h ) \u003e 0\r\n        )\r\n        * on(namespace) group_left()\r\n        kube_namespace_labels{label_namespace_ssc_spc_gc_ca_purpose=\"system\"} offset 24h\r\n    )\r\n) OR on() vector(0))",
+                "instant": true,
+                "intervalMs": 1000,
+                "legendFormat": "__auto",
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "aur_high_24h"
+              }
+            },
+            {
+              "refId": "csp_crit_24h",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "editorMode": "code",
+                "expr": "(sum(\r\n    max by (image_registry, image_repository, image_tag, severity, namespace) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"Critical\", image_registry=~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h]) \u003e 0\r\n        )\r\n    )\r\n) OR on() vector(0))\r\n-\r\n(sum(\r\n    max by (image_registry, image_repository, image_tag, severity, namespace) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"Critical\", image_registry=~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h] offset 24h ) \u003e 0\r\n        )\r\n    )\r\n) OR on() vector(0))",
+                "instant": true,
+                "intervalMs": 1000,
+                "legendFormat": "__auto",
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "csp_crit_24h"
+              }
+            },
+            {
+              "refId": "csp_high_24h",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "editorMode": "code",
+                "expr": "(sum(\r\n    max by (image_registry, image_repository, image_tag, severity, namespace) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"High\", image_registry=~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h]) \u003e 0\r\n        )\r\n    )\r\n) OR on() vector(0))\r\n-\r\n(sum(\r\n    max by (image_registry, image_repository, image_tag, severity, namespace) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"High\", image_registry=~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h] offset 24h ) \u003e 0\r\n        )\r\n    )\r\n) OR on() vector(0))",
+                "instant": true,
+                "intervalMs": 1000,
+                "legendFormat": "__auto",
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "csp_high_24h"
+              }
+            },
+            {
+              "refId": "aur_crit_7d",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "editorMode": "code",
+                "expr": "(sum(\r\n    max by (image_registry, image_repository, image_tag, severity) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"Critical\", image_registry!~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h]) \u003e 0\r\n        )\r\n        * on(namespace) group_left()\r\n        kube_namespace_labels{label_namespace_ssc_spc_gc_ca_purpose=\"system\"}\r\n    )\r\n) OR on() vector(0))\r\n-\r\n(sum(\r\n    max by (image_registry, image_repository, image_tag, severity) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"Critical\", image_registry!~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h] offset 7d ) \u003e 0\r\n        )\r\n        * on(namespace) group_left()\r\n        kube_namespace_labels{label_namespace_ssc_spc_gc_ca_purpose=\"system\"} offset 7d\r\n    )\r\n) OR on() vector(0))",
+                "instant": true,
+                "intervalMs": 1000,
+                "legendFormat": "__auto",
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "aur_crit_7d"
+              }
+            },
+            {
+              "refId": "aur_high_7d",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "editorMode": "code",
+                "expr": "(sum(\r\n    max by (image_registry, image_repository, image_tag, severity) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"High\", image_registry!~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h]) \u003e 0\r\n        )\r\n        * on(namespace) group_left()\r\n        kube_namespace_labels{label_namespace_ssc_spc_gc_ca_purpose=\"system\"}\r\n    )\r\n) OR on() vector(0))\r\n-\r\n(sum(\r\n    max by (image_registry, image_repository, image_tag, severity) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"High\", image_registry!~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h] offset 7d ) \u003e 0\r\n        )\r\n        * on(namespace) group_left()\r\n        kube_namespace_labels{label_namespace_ssc_spc_gc_ca_purpose=\"system\"} offset 7d\r\n    )\r\n) OR on() vector(0))",
+                "instant": true,
+                "intervalMs": 1000,
+                "legendFormat": "__auto",
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "aur_high_7d"
+              }
+            },
+            {
+              "refId": "csp_crit_7d",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "editorMode": "code",
+                "expr": "(sum(\r\n    max by (image_registry, image_repository, image_tag, severity, namespace) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"Critical\", image_registry=~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h]) \u003e 0\r\n        )\r\n    )\r\n) OR on() vector(0))\r\n-\r\n(sum(\r\n    max by (image_registry, image_repository, image_tag, severity, namespace) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"Critical\", image_registry=~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h] offset 7d ) \u003e 0\r\n        )\r\n    )\r\n) OR on() vector(0))",
+                "instant": true,
+                "intervalMs": 1000,
+                "legendFormat": "__auto",
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "csp_crit_7d"
+              }
+            },
+            {
+              "refId": "csp_high_7d",
+              "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+              },
+              "datasourceUid": "prometheus",
+              "model": {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "editorMode": "code",
+                "expr": "(sum(\r\n    max by (image_registry, image_repository, image_tag, severity, namespace) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"High\", image_registry=~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h]) \u003e 0\r\n        )\r\n    )\r\n) OR on() vector(0))\r\n-\r\n(sum(\r\n    max by (image_registry, image_repository, image_tag, severity, namespace) (\r\n        (max_over_time (\r\n            trivy_image_vulnerabilities{severity=\"High\", image_registry=~\"mcr\\\\.microsoft\\\\.com|.*\\\\.azurecr\\\\.io|.*\\\\.amazonaws\\\\.com|gcr\\\\.io\"} \r\n            [2h] offset 7d ) \u003e 0\r\n        )\r\n    )\r\n) OR on() vector(0))",
+                "instant": true,
+                "intervalMs": 1000,
+                "legendFormat": "__auto",
+                "maxDataPoints": 43200,
+                "range": false,
+                "refId": "csp_high_7d"
+              }
+            },
+            {
+              "refId": "D",
+              "queryType": "expression",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": [
+                        "D"
+                      ]
+                    },
+                    "reducer": {
+                      "params": [],
+                      "type": "last"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "total_current",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "D",
+                "type": "threshold"
+              }
+            },
+            {
+              "refId": "total_current",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0,
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": []
+                    },
+                    "reducer": {
+                      "params": [],
+                      "type": "avg"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "name": "Expression",
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "$aur_crit_current + $aur_high_current + $csp_crit_current + $csp_high_current",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "total_current",
+                "type": "math"
+              }
+            },
+            {
+              "refId": "total_24h_delta",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0,
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": []
+                    },
+                    "reducer": {
+                      "params": [],
+                      "type": "avg"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "name": "Expression",
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "$aur_crit_24h + $aur_high_24h + $csp_crit_24h + $csp_high_24h",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "total_24h_delta",
+                "type": "math"
+              }
+            },
+            {
+              "refId": "total_7d_delta",
+              "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+              },
+              "datasourceUid": "__expr__",
+              "model": {
+                "conditions": [
+                  {
+                    "evaluator": {
+                      "params": [
+                        0,
+                        0
+                      ],
+                      "type": "gt"
+                    },
+                    "operator": {
+                      "type": "and"
+                    },
+                    "query": {
+                      "params": []
+                    },
+                    "reducer": {
+                      "params": [],
+                      "type": "avg"
+                    },
+                    "type": "query"
+                  }
+                ],
+                "datasource": {
+                  "name": "Expression",
+                  "type": "__expr__",
+                  "uid": "__expr__"
+                },
+                "expression": "$aur_crit_7d + $aur_high_7d + $csp_crit_7d + $csp_high_7d",
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "total_7d_delta",
+                "type": "math"
+              }
+            }
+          ],
+          "dashboardUid": "ycwPj724k",
+          "panelId": 30,
+          "noDataState": "NoData",
+          "execErrState": "Error",
+          "for": "0s",
+          "annotations": {
+            "__dashboardUid__": "ycwPj724k",
+            "__panelId__": "30",
+            "description": "Trivy Vulnerability Status Summary:\n\nAurora:\n\u0026nbsp;\u0026nbsp;•**Critical**: {{ printf \"%.0f\" $values.aur_crit_current.Value }} (24h delta: {{ if gt $values.aur_crit_24h.Value 0.0 }}+{{ end}}{{ printf \"%.0f\" $values.aur_crit_24h.Value }}, 7d delta: {{ if gt $values.aur_crit_7d.Value 0.0 }}+{{ end}}{{ printf \"%.0f\" $values.aur_crit_7d.Value }})  \n\u0026nbsp;\u0026nbsp;•**High**: {{ printf \"%.0f\" $values.aur_high_current.Value }} (24h delta: {{ if gt $values.aur_high_24h.Value 0.0 }}+{{ end}}{{ printf \"%.0f\" $values.aur_high_24h.Value }}, 7d delta: {{ if gt $values.aur_high_7d.Value 0.0 }}+{{ end}}{{ printf \"%.0f\" $values.aur_high_7d.Value }})  \n\nCSP:\n\u0026nbsp;\u0026nbsp;•**Critical**: {{ printf \"%.0f\" $values.csp_crit_current.Value }} (24h delta: {{ if gt $values.csp_crit_24h.Value 0.0 }}+{{ end}}{{ printf \"%.0f\" $values.csp_crit_24h.Value }}, 7d delta: {{ if gt $values.csp_crit_7d.Value 0.0 }}+{{ end}}{{ printf \"%.0f\" $values.csp_crit_7d.Value }})  \n\u0026nbsp;\u0026nbsp;•**High**: {{ printf \"%.0f\" $values.csp_high_current.Value }} (24h delta: {{ if gt $values.csp_high_24h.Value 0.0 }}+{{ end}}{{ printf \"%.0f\" $values.csp_high_24h.Value }}, 7d delta: {{ if gt $values.csp_high_7d.Value 0.0 }}+{{ end}}{{ printf \"%.0f\" $values.csp_high_7d.Value }})  \n\nTotals:\n\u0026nbsp;\u0026nbsp;•**Critical**: {{ printf \"%.0f\" $values.total_current.Value }}  \n\u0026nbsp;\u0026nbsp;•**24h Delta**: {{ if gt $values.total_24h_delta.Value 0.0 }}+{{ end}}{{ printf \"%.0f\" $values.total_24h_delta.Value }}  \n\u0026nbsp;\u0026nbsp;•**7d Delta**: {{ if gt $values.total_7d_delta.Value 0.0 }}+{{ end}}{{ printf \"%.0f\" $values.total_7d_delta.Value }}"
+          },
+          "labels": {
+            "notification_route": "trivy"
+          },
+          "isPaused": false
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+# Test-only values used by CI to render the real Trivy alert path. Argo CD and
+# production deployments do not consume this file. Use only non-production data.
+
+folders:
+  trivy:
+    enabled: true
+
+timeIntervals:
+  weekday-morning:
+    enabled: true
+
+notificationTemplates:
+  gcNotify:
+    enabled: true
+
+managedSecrets:
+  trivy-gc-notify:
+    enabled: true
+    stringData:
+      trivy-webhook-url: https://example.invalid/trivy-webhook
+      trivy-webhook-authorization-credentials: example-trivy-api-key
+
+contactPoints:
+  trivy-gc-notify:
+    enabled: true
+    recipients:
+      - email: trivy-primary@example.invalid
+        name: Trivy Primary
+      - email: trivy-secondary@example.invalid
+        name: Trivy Secondary
+    gcNotify:
+      templateId: 00000000-0000-0000-0000-000000000000
+    authorization:
+      enabled: true
+
+routes:
+  trivy:
+    enabled: true

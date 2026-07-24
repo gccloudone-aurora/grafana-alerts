@@ -1,0 +1,28 @@
+# Creates the shared GC Notify JSON payload used by webhook contact points.
+
+# Usage: Normally do not edit this template; alert exports supply the message in
+# annotations.description and private values supply recipient and template data.
+{{- if .Values.notificationTemplates.gcNotify.enabled }}
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaNotificationTemplate
+metadata:
+  name: gc-notify-template
+  namespace: {{ .Values.namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  name: gc-notify-template
+  instanceSelector:
+{{ toYaml .Values.instanceSelector | nindent 4 }}
+  template: |
+    {{`{{ define "gc-notify.payload" -}}`}}
+    {{`{{ coll.Dict
+      "email_address" .Vars.email_address
+      "template_id" .Vars.template_id
+      "personalisation" (coll.Dict
+        "name" .Vars.recipient_name
+        "message" .CommonAnnotations.description)
+      | data.ToJSON
+    }}`}}
+    {{`{{- end }}`}}
+{{- end }}

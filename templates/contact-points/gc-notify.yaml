@@ -1,0 +1,53 @@
+# Creates enabled GC Notify webhook contact points from contactPoints values.
+
+# Usage: Add or update recipients and template IDs in private Aurora values;
+# keep webhook URLs and credentials in the referenced Kubernetes Secret.
+{{- range $key, $contactPoint := .Values.contactPoints }}
+{{- if and $contactPoint.enabled (eq $contactPoint.type "gc-notify-webhook") }}
+{{- $recipients := $contactPoint.recipients }}
+{{- if eq (len $recipients) 0 }}
+{{- fail (printf "contactPoints.%s.recipients must contain at least one recipient" $key) }}
+{{- end }}
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaContactPoint
+metadata:
+  name: {{ required (printf "contactPoints.%s.name is required" $key) $contactPoint.name | quote }}
+  namespace: {{ $.Values.namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  name: {{ $contactPoint.name | quote }}
+  instanceSelector:
+{{ toYaml $.Values.instanceSelector | nindent 4 }}
+  receivers:
+{{- range $index, $recipient := $recipients }}
+    - type: webhook
+      disableResolveMessage: {{ $contactPoint.disableResolveMessage }}
+      settings:
+        httpMethod: POST
+        payload:
+          template: '{{`{{ template "gc-notify.payload" . }}`}}'
+          vars:
+            email_address: {{ required (printf "contactPoints.%s.recipients[%d].email is required" $key $index) $recipient.email | quote }}
+            recipient_name: {{ required (printf "contactPoints.%s.recipients[%d].name is required" $key $index) $recipient.name | quote }}
+            template_id: {{ required (printf "contactPoints.%s.gcNotify.templateId is required" $key) $contactPoint.gcNotify.templateId | quote }}
+{{- if $contactPoint.authorization.enabled }}
+        authorization_scheme: {{ required (printf "contactPoints.%s.authorization.scheme is required when authorization is enabled" $key) $contactPoint.authorization.scheme | quote }}
+{{- end }}
+      valuesFrom:
+        - targetPath: url
+          valueFrom:
+            secretKeyRef:
+              name: {{ required (printf "contactPoints.%s.secretRef.name is required" $key) $contactPoint.secretRef.name | quote }}
+              key: {{ required (printf "contactPoints.%s.secretRef.urlKey is required" $key) $contactPoint.secretRef.urlKey | quote }}
+{{- if $contactPoint.authorization.enabled }}
+        - targetPath: authorization_credentials
+          valueFrom:
+            secretKeyRef:
+              name: {{ $contactPoint.secretRef.name | quote }}
+              key: {{ required (printf "contactPoints.%s.secretRef.authorizationCredentialsKey is required when authorization is enabled" $key) $contactPoint.secretRef.authorizationCredentialsKey | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

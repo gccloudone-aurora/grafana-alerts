@@ -1,0 +1,27 @@
+# Creates reusable notification schedules from timeIntervals values.
+
+# Usage: Add or update a schedule here, then reference its key from a route's
+# activeTimeIntervalRefs or muteTimeIntervalRefs list.
+{{- range $key, $timing := .Values.timeIntervals }}
+{{- if $timing.enabled }}
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaMuteTiming
+metadata:
+  name: {{ required (printf "timeIntervals.%s.name is required" $key) $timing.name | quote }}
+  namespace: {{ $.Values.namespace | quote }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  name: {{ $timing.name | quote }}
+  instanceSelector:
+{{ toYaml $.Values.instanceSelector | nindent 4 }}
+  time_intervals:
+    - times:
+        - start_time: {{ $timing.startTime | quote }}
+          end_time: {{ $timing.endTime | quote }}
+      weekdays:
+{{ toYaml $timing.weekdays | nindent 8 }}
+      location: {{ $timing.location | quote }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,88 @@
+# -- Namespace where Grafana alerting resources are created.
+namespace: grafana-system
+
+# -- Labels used by the Grafana Operator to select Grafana instances.
+instanceSelector:
+  matchLabels:
+    dashboards: aurora
+
+# Alert exports must use this stable datasource UID in both data[].datasourceUid
+# and model.datasource.uid.
+datasourceUid: prometheus
+
+notificationPolicy:
+  # -- Create the single root notification policy for the selected Grafana instance.
+  enabled: true
+  # -- Alert label used to select a notification route.
+  routingLabel: notification_route
+  routeSelectorLabels:
+    aurora.gccloudone.ca/notification-route: "true"
+
+# Folders organize alert rule groups. Routing is controlled independently by
+# labels in alert exports and the routes collection below.
+folders:
+  trivy:
+    enabled: false
+    name: trivy-alerts
+    title: trivy
+
+# Reusable time intervals. Routes choose whether each interval is active or muted.
+timeIntervals:
+  weekday-morning:
+    enabled: false
+    name: weekday-morning
+    startTime: "08:00"
+    endTime: "09:00"
+    weekdays:
+      - monday:friday
+    location: America/Toronto
+
+notificationTemplates:
+  gcNotify:
+    enabled: false
+
+# Optional Secrets rendered from private values processed by AVP. A contact point
+# may instead reference a Secret managed by another controller.
+managedSecrets:
+  trivy-gc-notify:
+    enabled: false
+    name: grafana-alerting-contact-points
+    stringData:
+      trivy-webhook-url: ""
+      trivy-webhook-authorization-credentials: ""
+
+# Supported contact point providers are explicit so provider-specific settings
+# and secret references remain visible in rendered resources.
+contactPoints:
+  trivy-gc-notify:
+    enabled: false
+    name: trivy-webhook
+    type: gc-notify-webhook
+    disableResolveMessage: true
+    recipients: []
+    gcNotify:
+      templateId: ""
+    secretRef:
+      name: grafana-alerting-contact-points
+      urlKey: trivy-webhook-url
+      authorizationCredentialsKey: trivy-webhook-authorization-credentials
+    authorization:
+      enabled: false
+      scheme: ApiKey-v1
+
+# Routes are independent from folders and contact points. Alert rule labels select
+# a route through notificationPolicy.routingLabel and matcherValue.
+routes:
+  trivy:
+    enabled: false
+    receiverRef: trivy-gc-notify
+    matcherValue: trivy
+    additionalMatchers: []
+    groupBy:
+      - alertname
+    groupWait: 30s
+    groupInterval: 5m
+    repeatInterval: 24h
+    activeTimeIntervalRefs:
+      - weekday-morning
+    muteTimeIntervalRefs: []
