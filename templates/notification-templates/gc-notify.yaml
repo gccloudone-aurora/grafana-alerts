@@ -20,8 +20,9 @@ spec:
       "email_address" .Vars.email_address
       "template_id" .Vars.template_id
       "personalisation" (coll.Dict
-        "name" .Vars.recipient_name
-        "message" .CommonAnnotations.description)
+        "tag_alert_subject" .CommonLabels.alertname
+        "recipient_name" .Vars.recipient_name
+        "alert_summary" .CommonAnnotations.description)
       | data.ToJSON
     }}`}}
     {{`{{- end }}`}}
