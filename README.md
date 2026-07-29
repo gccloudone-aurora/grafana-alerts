@@ -135,8 +135,9 @@ data as AVP placeholders. AVP resolves the placeholders after Helm renders the
 chart, so credentials are not committed to this repository.
 
 The Trivy webhook targets the GC Notify email API. Its template must contain
-`((name))` and `((message))` personalisation fields. Configure authorization
-with the `ApiKey-v1` scheme. The API key and webhook URL are read from the
+`((tag_alert_subject))`, `((recipient_name))`, and `((alert_summary))` personalisation fields. 
+The alert name is the subject, the alert description is the summary, and the contact point is the name.
+Configure authorization with the `ApiKey-v1` scheme. The API key and webhook URL are read from the
 contact-point Secret.
 
 A private Git repository is not a secret store. Do not provide literal secret
